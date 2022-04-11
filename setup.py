@@ -6,6 +6,9 @@ setup(
     py_modules=['ipecol'],
     install_requires=[
         'Click',
+        'jinja2',
+        'bs4',
+        'lxml'
     ],
     entry_points={
         'console_scripts': [
