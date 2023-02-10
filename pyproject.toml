@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ipecol"
+version = "0.1.0"
+authors = [
+    { name = "Fabian Klute", email = "fmklute@gmail.com"}
+]
+readme = "README.md"
+dependencies = [
+    "Click",
+    "jinja2",
+    "bs4",
+    "lxml"
+]
+
+[project.scripts]
+ipecol = "ipecol.ipecol:cli"
