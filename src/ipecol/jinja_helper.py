@@ -7,4 +7,3 @@ template_env = jinja2.Environment(loader = template_loader)
 def get_template(path):
     template = template_env.get_template(path)
     return template
-

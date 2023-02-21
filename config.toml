@@ -1,0 +1,4 @@
+[config]
+repository="/home/fabian/ipe/ipe_collection"
+renderhints="/home/fabian/code/ipecol/renderhints.json"
+directories=["colors","dashes","decorations","marks","text"]

@@ -13,7 +13,9 @@ dependencies = [
     "Click",
     "jinja2",
     "bs4",
-    "lxml"
+    "lxml",
+    "GitPython",
+    "tomli"
 ]
 
 [project.scripts]

@@ -1,11 +1,39 @@
-<path stroke="{{ options.stroke_color }}" pen="{{ options.pen }}" {% block attributes %}{% endblock %}>
-48 704 m
-144 704 l
-</path>
 <path stroke="white">
-48 720 m
-48 688 l
-144 688 l
-144 720 l
+{% if options.pen == "ultrafat" -%}
+0 16 m
+0 0 l
+48 0 l
+48 16 l
+{%- elif options.pen == "fat" -%}
+0 14 m
+0 0 l
+42 0 l
+42 14 l
+{%- elif options.pen == "heavier" -%}
+0 12 m
+0 0 l
+36 0 l
+36 12 l
+{%- else -%}
+0 10 m
+0 0 l
+30 0 l
+30 10 l
+{%- endif %}
 h
+</path>
+<path stroke="{{ options.stroke_color }}" pen="{{ options.pen }}" {% block attributes %}{% endblock %}>
+{% if options.pen == "ultrafat" -%}
+0 8 m
+44 8 l
+{%- elif options.pen == "fat" -%}
+0 7 m
+38 7 l
+{%- elif options.pen == "heavier" -%}
+0 6 m
+32 6 l
+{%- else -%}
+0 5 m
+26 5 l
+{%- endif %}
 </path>

@@ -1,9 +1,33 @@
 {%- for doc in documentation.docs -%}
 ## {{ doc.title }}
-*Provided by: {{ doc.provided_by }}*
-
+{% if doc.provided_by != ['unknown'] -%}
+*Provided by: {{ doc.provided_by|join(', ') }}*
+{% endif %}
 {{ doc.description }}
-{% for example in doc.examples %}
-<img src="../../assets/{{ doc.directory }}/{{ example.picture_path }}" width="48">{{ example.name }}
+
+{%- if doc.examples|length > collapseat -%}
+<details>
+<summary>Click for examples.</summary>
+{%- endif %}
+
+<table>
+{% for example in doc.examples -%}
+<tr>
+<td valign="middle"><img src="
+{%- if documentation.testing -%}
+{{ example.picture_path }}
+{%- else -%}
+https://github.com/loizuf/ipe_collection/blob/assets/{{ example.folder }}/{{ example.picture_path.name }}
+{%- endif -%}
+" width="{{ example.layout.width }}"></td>
+<td valign="middle">{{ example.name }}</td>
+</tr>
 {% endfor -%}
-{% endfor -%}
+</table>
+
+{%- if doc.examples|length > collapseat -%}
+</details>
+{%- endif %}
+<br />
+
+{% endfor %}

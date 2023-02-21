@@ -1,2 +1,7 @@
 {% extends "segment.jinja2" %}
-{% block attributes %}arrow="{{ name }}"{% endblock %}
+{% block attributes -%}
+arrow="{{ name }}/{{ options.pen }}"
+{%- if options.cap -%}
+{{ " " }}cap="{{ options.cap }}"
+{%- endif -%}
+{%- endblock %}

@@ -1,7 +1,0 @@
-{%- for doc in documentation.docs %}
-## {{ doc.title }}
-{{ doc.description }}
-{% for example in doc.examples %}
-<img src="../../assets/{{ doc.directory }}/{{ example.picture_path }}" width="48">{{ example.name }}
-{% endfor -%}
-{% endfor -%}

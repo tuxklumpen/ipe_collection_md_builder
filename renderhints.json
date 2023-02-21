@@ -1,0 +1,27 @@
+{
+    "layout" : {
+        "textstyle" : {"width" : 600}
+    },
+    "tags" : {
+        "dashstyle" : {"pen" : "ultrafat"},
+        "arrow" : {"pen" : "normal"}
+    },
+    "styles" : {
+        "round dots 1" : {"cap": "1", "pen": "normal"},
+        "round dots 2" : {"cap": "1", "pen": "heavier"},
+        "round dots 4" : {"cap": "1", "pen": "fat"},
+        "round dots 8" : {"cap": "1", "pen": "ultrafat"},
+        "round dots 16" : {"cap": "1"},
+        "W dashed normal" : {"cap": "1", "pen" : "normal"},
+        "W dashed heavier" : {"cap": "1", "pen" : "heavier"},
+        "W dashed fat" : {"cap": "1", "pen" : "fat"},
+        "W dashed ultrafat" : {"cap": "1"},
+        "W dot normal" : {"cap": "1", "pen" : "normal"},
+        "W dot heavier" : {"cap": "1", "pen" : "heavier"},
+        "W dot fat" : {"cap": "1", "pen" : "fat"},
+        "W dot ultrafat" : {"cap": "1"},
+        "mark/f_cross(sfx)": {"fill_color": "lightgreen"},
+        "contour (black)": {"stroke_color": "gold"},
+        "contour (white)": {"background_color": "black"}
+    }
+}

@@ -1,6 +1,6 @@
 import subprocess
 import inspect
-import os
+import pathlib
 from bs4 import BeautifulSoup
 from dataclasses import dataclass, field
 from ipecol.jinja_helper import get_template
@@ -15,11 +15,18 @@ class IpeOptions:
     fill_color : str = "white"
     pen : str = "normal"
     mark_size : str = "normal"
-
+    cap : str = None
+    background_color: str = "white"
+    
+@dataclass
+class MDOptions:
+    width : int = 200
+    
 class StylefileTagParser(ABC):
-    def __init__(self, template, options = IpeOptions()):
+    def __init__(self, template, options = IpeOptions(), layout = MDOptions()):
         self.template = template
         self.options = options
+        self.layout = layout
 
     def _render_template(self, name):
         template = get_template(self.template)
@@ -38,12 +45,12 @@ class StylefileTagParser(ABC):
         pass
 
     @abstractmethod
-    def parse(self, tag):
+    def parse(self, name, hint):
         pass
 
 class SymbolParser(StylefileTagParser):
-    def __init__(self, symbolname, template, options = IpeOptions()):
-        super().__init__(template, options)
+    def __init__(self, symbolname, template, options = IpeOptions(), layout = MDOptions()):
+        super().__init__(template, options, layout)
         self.symbolname = symbolname
 
     def applies(self, tag):
@@ -55,31 +62,36 @@ class SymbolParser(StylefileTagParser):
 class MarkParser(SymbolParser):
     TEMPLATE = "mark.jinja2"
 
-    def __init__(self, options = IpeOptions()):
-        super().__init__("mark", MarkParser.TEMPLATE, options)
+    def __init__(self, options = IpeOptions(), layout = MDOptions()):
+        super().__init__("mark", MarkParser.TEMPLATE, options, layout)
         
-    def parse(self, tag):
-        name = tag["name"]
+    def parse(self, name):
         ipe = self._render_template(name)
+        return self._make_parsed(name, ipe)
 
+class DecorationParser(SymbolParser):
+    TEMPLATE = "decoration.jinja2"
+
+    def __init__(self, options = IpeOptions(), layout = MDOptions()):
+        super().__init__("decoration", DecorationParser.TEMPLATE, options, layout)
+        
+    def parse(self, name):
+        ipe = self._render_template(name)
         return self._make_parsed(name, ipe)
 
 class ArrowParser(SymbolParser):
     TEMPLATE = "arrow.jinja2"
 
-    def __init__(self, options = IpeOptions()):
-        super().__init__("arrow", ArrowParser.TEMPLATE, options)
+    def __init__(self, options = IpeOptions(), layout = MDOptions()):
+        super().__init__("arrow", ArrowParser.TEMPLATE, options, layout)
 
-    def parse(self, tag):
-        name = tag["name"]
-        self.options.pen = "ultrafat"
-        ipe = self._render_template(name)
-
+    def parse(self, name):
+        ipe = self._render_template(name.replace("arrow/", "").replace("(spx)", ""))
         return self._make_parsed(name, ipe)
 
 class PropertyParser(StylefileTagParser):
-    def __init__(self, propertyname, template, options = IpeOptions()):
-        super().__init__(template, options)
+    def __init__(self, propertyname, template, options = IpeOptions(), layout = MDOptions()):
+        super().__init__(template, options, layout)
         self.propertyname = propertyname
 
     def applies(self, tag):
@@ -91,32 +103,42 @@ class PropertyParser(StylefileTagParser):
 class DashParser(PropertyParser):
     TEMPLATE = "dashstyle.jinja2"
 
-    def __init__(self, options = IpeOptions()):
-        super().__init__("dashstyle", DashParser.TEMPLATE, options)
+    def __init__(self, options = IpeOptions(), layout = MDOptions()):
+        super().__init__("dashstyle", DashParser.TEMPLATE, options, layout)
 
-    def parse(self, tag):
-        name = tag["name"]
-        self.options.pen = "ultrafat"
+    def parse(self, name):
         ipe = self._render_template(name)
-
         return self._make_parsed(name, ipe)
 
 class ColorParser(PropertyParser):
     TEMPLATE = "color.jinja2"
 
-    def __init__(self, options = IpeOptions()):
-        super().__init__("color", ColorParser.TEMPLATE, options)
+    def __init__(self, options = IpeOptions(), layout = MDOptions()):
+        super().__init__("color", ColorParser.TEMPLATE, options, layout)
 
-    def parse(self, tag):
-        name = tag["name"]
+    def parse(self, name):
         ipe = self._render_template(name)
+        return self._make_parsed(name, ipe)
 
+class TextstyleParser(PropertyParser):
+    TEMPLATE = "textstyle.jinja2"
+
+    def __init__(self, options = IpeOptions(), layout = MDOptions()):
+        super().__init__("textstyle", TextstyleParser.TEMPLATE, options, layout)
+
+    def parse(self, name):
+        ipe = self._render_template(name)
         return self._make_parsed(name, ipe)
 
 @dataclass
 class Example:
     name: str
-    picture_path: str
+    picture_path: pathlib.Path
+    folder: str
+    layout: MDOptions = MDOptions()
+    
+    def set_testing_path(self, svgpath):
+        self.picture_path = pathlib.Path(svgpath) / self.picture_path.name
 
 def get_name(ipe_name):
     return ipe_name.replace("/", "")
@@ -126,23 +148,32 @@ def all_subclasses(cls):
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)])
 
-def process_tag(tag):
+def process_tag(tag, hints):
     item = None
     for parser_cls in all_subclasses(StylefileTagParser):
         if not inspect.isabstract(parser_cls):
             parser = parser_cls()
             if parser.applies(tag):
-                item = parser.parse(tag)
+                name = tag["name"]
+                
+                #TODO: Tag and layout hints currently do not work for symbols, fix.
+                if hints:
+                    tag_hints = hints["tags"].get(tag.name, dict())
+                    style_hints = hints["styles"].get(name, dict())
+                    hints_dict = dict(tag_hints, **style_hints)
+                    parser.options = IpeOptions(**hints_dict)
+                    
+                item = parser.parse(name)
 
     return item
 
-def examples_from_stylefile(soup):
+def examples_from_stylefile(soup, svgpath, renderfile, folder, hints):
     template = get_template(IPE_TEMPLATE_FILE)
     
     items = []
     for child in soup.ipestyle.children:
         if child != "\n":
-            item = process_tag(child)
+            item = process_tag(child, hints)
             if item != None:
                 items.append(item)
 
@@ -153,14 +184,16 @@ def examples_from_stylefile(soup):
 
     #TODO: Should make a temporary file instead
     output = template.render(template_variables)
-    with open(IPE_RENDER_FILE, "w") as fp:
+    with open(renderfile, "w") as fp:
         fp.write(output)
 
     examples = []
     for item in items:
         page = item["name"]
-        outfile = get_name(item["name"]) + ".svg"
-        subprocess.run(["iperender", "-svg", "-page", page, IPE_RENDER_FILE, outfile],
+        svgname = get_name(item["name"]) + ".svg"
+        svgname = pathlib.Path(svgname.replace(" ", "_"))
+        outfile = svgpath / svgname
+        subprocess.run(["iperender", "-svg", "-page", page, renderfile, outfile],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.STDOUT)
 
@@ -170,8 +203,12 @@ def examples_from_stylefile(soup):
             fp.seek(0)
             fp.write(figsoup.prettify())
 
-        examples.append(Example(page, outfile))
+        example = Example(page, outfile, folder)
         
-    os.remove(IPE_RENDER_FILE)
+        if hints:
+            layout_hints = hints["layout"].get(item["type"], dict())
+            example.layout = MDOptions(**layout_hints)
+            
+        examples.append(example)
 
     return examples
