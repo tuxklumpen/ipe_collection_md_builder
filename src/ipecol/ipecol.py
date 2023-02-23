@@ -40,6 +40,7 @@ def _generate_doc(stylefiles, mdfile, svgpath, renderhints, renderfile=pathlib.P
 def cli():
     pass
 
+# Only for debugging purposes now
 # The generate documentation command
 @cli.command()
 @click.option('--renderfile', type = click.Path(path_type = pathlib.Path, writable = True, dir_okay = False), default = pathlib.Path("render.ipe"))
@@ -54,9 +55,9 @@ def generate_doc(stylefiles, mdfile, svgpath, renderfile, keeprender, testing, r
     
 # Command to update the whole repo
 @cli.command()
-@click.option('-c', '--config', type=click.Path(path_type=pathlib.Path, dir_okay=False))
-@click.option('-r', '--renderhints', type = click.Path(path_type=pathlib.Path, dir_okay=False), default=None)
-@click.option('-g', '--repopath', type=click.Path(exists=True, path_type=pathlib.Path, file_okay=False), default=None)
+@click.option('-c', '--config', type=click.Path(path_type=pathlib.Path, dir_okay=False), help="The config file in toml format.")
+@click.option('-r', '--renderhints', type = click.Path(path_type=pathlib.Path, dir_okay=False), default=None, help="A renderhints file overwriting the on in the config file.")
+@click.option('-g', '--repopath', type=click.Path(exists=True, path_type=pathlib.Path, file_okay=False), default=None, help="The path to the local GIT repo of the ipe collection overwriting the on in the config file.")
 def update(repopath, config, renderhints):
     cfg = None
     with open(config, "rb") as f:
